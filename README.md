@@ -30,7 +30,7 @@
 - 支持截图直接上传到第三方图床，并返回链接地址
 
 
-详细请查阅文档：**[说明文档](https://github.com/yanzzchn/dmenu_shot_plus/docs/actions.md).**
+详细请查阅文档：**[说明文档](docs/actions.md).**
 
 -------
 
@@ -38,9 +38,8 @@
 - [Table of Content](#table-of-content)
 - [How to use](#how-to-use)
 - [依赖解决](#依赖解决)
-- [Installation](#installation)
-  - [Automatic Installation](#automatic-installation)
   - [Manual Installation （推荐）](#manual-installation-推荐)
+- [配置快捷键](#配置快捷键)
 - [Configuration](#configuration)
 - [Uninstall](#uninstall)
 - [Commands](#commands)
@@ -71,13 +70,8 @@ If you have the `make` installed, you can check what dependencies are installed 
 
 ```sh
 make check
-```
-
--------
-
-## Installation
-
-### Automatic Installation
+```dmenu_shot
+### Automatic Installation (不推荐)
 
 When you have installed all the dependencies, simply do:
 
@@ -85,21 +79,14 @@ When you have installed all the dependencies, simply do:
 
 ```sh
 # To clone the repo
-git clone https://github.com/yanzzchn/dmenu_shot.git 
+git clone https://github.com/yanzzchn/dmenu_shot_plus.git 
 ```
 
-OR
+
+1. Install using the Makefile:
 
 ```sh
-# To download the ZIP file
-wget https://github.com/yanzzchn/dmenu_shot/archive/master.tar.gz
-gunzip --keep dmenu_shot-master.tar.gz
-```
-
-2. Install using the Makefile:
-
-```sh
-cd dmenu_shot
+cd dmenu_shot_plus
 make install
 ```
 
@@ -111,29 +98,30 @@ This will install the dmenu_shot to `~/.local/bin` (so it will NOT install it sy
 
 ```sh
 # To clone the repo
-git clone https://github.com/yanzzchn/dmenu_shot.git 
+git clone https://github.com/yanzzchn/dmenu_shot_plus.git 
 ```
 
-OR
+
+1. Copy the file to the location you want. I suggest `~/.local/bin`:
 
 ```sh
-# To download the ZIP file
-wget https://github.com/yanzzchn/dmenu_shot/archive/master.tar.gz
-gunzip --keep dmenu_shot-master.tar.gz
-```
-
-2. Copy the file to the location you want. I suggest `~/.local/bin`:
-
-```sh
-cd dmenu_shot
-cp dmenu_shot.sh ~/.local/bin/dmenu_shot
+cd dmenu_shot_plus
+sudo chmod +x dmenu_shot.sh
+sudo ln -s ./dmenu_shot.sh /usr/local/bin/dmenu_shot
 ```
 
 -------
 
+
+## 配置快捷键
+
+如果是Ubuntu用户，可以直接在系统设置里面配置快捷键。触发快捷键之后，就会直接运行dmenu_shot，选择截图类型之后，会自动调用 flameshot, 截图成功之后请务选择复制到剪贴板。 因为目前脚本还不支持将处理之后的截图保存到本地。
+有需求的朋友可以自己进行二次开发，只需要将脚本中的剪贴板命令替换为直接的文件名和路径即可。
+
+
 ## Configuration
 
-`dmenu_shot` can be configured using a simple TOML file. The default path would be `~/.config/dmenushot/config.toml` but you can set a environment variable named `DMENU_SHOT_CONF_PATH` to overwrite the default path and point the `dmenu_shot` to a custom file.
+`dmenu_shot` can be configured using a simple TOML file. The default path would be `~/.config/dmenu_shot/config.toml` but you can set a environment variable named `DMENU_SHOT_CONF_PATH` to overwrite the default path and point the `dmenu_shot` to a custom file.
 
 Until this version we accept a section named `[colors]` which can have the custom color values of the dmenu as shown below. You do not need to define all of them. You can also use comments and empty lines in the config file.
 
