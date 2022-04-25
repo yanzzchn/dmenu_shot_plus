@@ -5,10 +5,10 @@
     # 一个获取自定义值作为输入的函数。获取一个字符串作为输入，作为消息使用。
     function func_get_input(){
         echo | dmenu -i -fn "UbuntuMono Nerd Font:size=11" \
-                -nb "${colors_normal_background}" \
-                -nf "${colors_normal_foreground}" \
-                -sb "${colors_selection_background}" \
-                -sf "${colors_selection_foreground}" \
+                -nb "${config_colors_normal_background}" \
+                -nf "${config_colors_normal_foreground}" \
+                -sb "${config_colors_selection_background}" \
+                -sf "${config_colors_selection_foreground}" \
                 -p "${1}:"
     }
 
@@ -45,42 +45,65 @@
             fi
 
             # create varible synamically using the combination of section and key
-            declare -g "${section}_${key}"="${value}"
+            declare -g "config_${section}_${key}"="${value}"
 
         done < "${1}"
     }
 }
 
 # 通过遮罩层叠进行添加边框
-add_bordered(){
-    if [ -n "$1" ]
-    then
-        resize="$1 $2"
-        echo "${resize}\n"
-        echo $resize
-    else
-        resize=''
-    fi
-
-    flameshot gui --raw \
-			| convert png:- \
-                $resize \
-      			-format 'roundrectangle 6,6 %[fx:w+0],%[fx:h+0] 15,15' \
-      			-write info:tmp.mvg \
-      			-alpha set -bordercolor LightGray -border 2 \
-				\( +clone -alpha transparent -background none \
-				-fill white -stroke none -strokewidth 0 -draw @tmp.mvg \) \
-				-compose DstIn -composite \
-				\( +clone -alpha transparent -background none \
-				-fill none -stroke LightGray -strokewidth 2 -draw @tmp.mvg \
-				-fill none -stroke LightGray -strokewidth 2 -draw @tmp.mvg \) \
-				-compose Over -composite png:- \
-			| xclip -selection clipboard -target image/png 
+#add_bordered(){
+#    if [ -n "$1" ]
+#    then
+#        resize="$1 $2"
+#    else
+#        resize=''
+#    fi
+#
+#    flameshot gui --raw \
+#			| convert png:- \
+#                $resize \
+#      			-format 'roundrectangle 6,6 %[fx:w+0],%[fx:h+0] 15,15' \
+#      			-write info:tmp.mvg \
+#      			-alpha set -bordercolor LightGray -border 2 \
+#				\( +clone -alpha transparent -background none \
+#				-fill white -stroke none -strokewidth 0 -draw @tmp.mvg \) \
+#				-compose DstIn -composite \
+#				\( +clone -alpha transparent -background none \
+#				-fill none -stroke LightGray -strokewidth 2 -draw @tmp.mvg \
+#				-fill none -stroke LightGray -strokewidth 2 -draw @tmp.mvg \) \
+#				-compose Over -composite png:- \
+#			| xclip -selection clipboard -target image/png 
         # 原始设置，单纯的添加一个红色边框，不包含圆角
         #flameshot gui --raw \
             #| convert png:- -bordercolor red -border 3 png:- \
          #   | convert png:- -bordercolor LightGray -border 2 png:- \
          #   | xclip -selection clipboard -target image/png
+#}
+
+# TODO：和原作者一起优化版，还未测试，待下次在Ubuntu中测试通过再替换
+# 从配置文件中读取边框和圆角参数
+# https://codeberg.org/mehrad/dmenu_shot/src/branch/main/dmenu_shot.sh
+add_bordered(){
+    if [ -n "$1" ]
+    then
+        resize="$1 $2"
+    else
+        resize=''
+    fi
+    	flameshot gui --raw \
+        | convert png:- \
+            $resize \
+            -format "roundrectangle 4,3 %[fx:w+0],%[fx:h+0] ${config_action_bordered_corner_radius},${config_action_bordered_corner_radius}" \
+            -write info:tmp.mvg \
+            -alpha set -bordercolor "${config_action_bordered_line_color}" -border ${config_action_bordered_line_thickness} \
+            \( +clone -alpha transparent -background none \
+                -fill white -stroke none -strokewidth 0 -draw @tmp.mvg \) \
+            -compose DstIn -composite \
+            \( +clone -alpha transparent -background none \
+                -fill none -stroke "${config_action_bordered_line_color}" -strokewidth ${config_action_bordered_line_thickness} -draw @tmp.mvg \) \
+            -compose Over -composite png:- \
+	    | xclip -selection clipboard -target image/png 
 }
 
 
@@ -139,37 +162,57 @@ EOF
 
 #-------[ load config ]-------#
 {
-    ## define the colors so that we have something to fallback to
-    colors_normal_foreground="#ff6600"
-    colors_normal_background="#8501a7"
-    colors_selection_foreground="#ffcc00"
-    colors_selection_background="#fa0164"
-
-    # get the config path from environmental variable, otherwise fall back to ~/.config/dmenu_shot/config.toml
-    if [[ -v DMENU_SHOT_CONF_PATH ]]
-    then
-        CONF_PATH="${DMENU_SHOT_CONF_PATH}"
-    else
-        CONF_PATH="${HOME}/.config/dmenu_shot/config.toml"
-    fi
-
-    # if the config file do exist
-    if [[ -f "${CONF_PATH}" ]]
-    then
-        func_parse_config "${CONF_PATH}"
-    else
-        echo "The config file was not found in ${CONF_PATH}"
-        echo "Falling back to some defaults!"
-    fi
+    #-------[ default values for config ]-------#
+    ## define some default config so that we have something to fallback to if
+    ## the user didn't have any config file.
+    {
+        #-------[ UI ]-------#
+        ## stuff for look and feel of the user interface
+        {
+            config_colors_normal_foreground="#ff6600"
+            config_colors_normal_background="#8501a7"
+            config_colors_selection_foreground="#ffcc00"
+            config_colors_selection_background="#fa0164"
+        }
+        
+        
+        #-------[ action - Bordered ]-------#
+        {
+            config_action_bordered_line_color="LightGray"
+            config_action_bordered_line_thickness=2
+            config_action_bordered_corner_radius=7
+        }
+    }
+    
+    
+    #-------[ read config file ]-------#
+    {
+        # get the config path from environmental variable, otherwise fall back to
+        # the ~/.config/dmenu_shot/config.toml
+        if [[ -v DMENU_SHOT_CONF_PATH ]]
+        then
+            CONF_PATH="${DMENU_SHOT_CONF_PATH}"
+        else
+            CONF_PATH="${HOME}/.config/dmenu_shot/config.toml"
+        fi
+        # if the config file do exist
+        if [[ -f "${CONF_PATH}" ]]
+        then
+            func_parse_config "${CONF_PATH}"
+        else
+            echo "The config file was not found in ${CONF_PATH}"
+            echo "Falling back to some defaults!"
+        fi
+    }
 }
 
 
 RET=$(echo -e "Scaled-Bordered\nTrim\nRemove_white\nNegative\nBordered\nScaled\nSelect_Window\nCancel" \
     | dmenu -i -fn "UbuntuMono Nerd Font:size=11" \
-        -nb "${colors_normal_background}" \
-        -nf "${colors_normal_foreground}" \
-        -sb "${colors_selection_background}" \
-        -sf "${colors_selection_foreground}" \
+        -nb "${config_colors_normal_background}" \
+        -nf "${config_colors_normal_foreground}" \
+        -sb "${config_colors_selection_background}" \
+        -sf "${config_colors_selection_foreground}" \
         -p "Select screenshot type:")
 
 case $RET in
